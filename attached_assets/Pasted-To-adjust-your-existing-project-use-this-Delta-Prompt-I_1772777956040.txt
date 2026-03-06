@@ -1,0 +1,42 @@
+To adjust your existing project, use this "Delta Prompt." It focuses specifically on the layout shift for desktop and the new authentication requirements without rewriting the parts you've already built.
+
+The Adjustment Prompt
+Update Task: Refactor the existing Mobile-First React Savings App to be fully responsive (Desktop-compatible) and expand the Authentication UI.
+
+1. Responsive Layout Refactor
+Navigation Switch: Implement a "Hybrid Navigation" system.
+
+On Mobile (default): Keep the fixed bottom navigation bar.
+
+On Desktop (md: breakpoint): Hide the bottom bar and show a fixed Left Sidebar with the same navigation links.
+
+Dashboard Grid: Change the main content container from a single column to a responsive grid. On desktop, the "Savings Overview" and "Recent Transactions" should sit side-by-side.
+
+Max-Width Container: Wrap the main content in a max-w-7xl mx-auto container to prevent the UI from stretching too thin on ultra-wide monitors.
+
+2. Enhanced Auth UI (Mock only)
+Sign-Up/Login Screen: Update the form to include:
+
+Email & Password fields.
+
+Invitation Code field (required for creating an account/joining a group).
+
+Social Auth: A "Sign in with Google" button with the Google icon, styled with a white background and subtle border.
+
+Responsive Auth Card: On mobile, the form should be full-screen; on desktop, it should be a centered, floating card with a subtle shadow.
+
+3. Component Tweaks
+Modals: Ensure the "Deposit" modal is a Bottom Sheet on mobile but a Centered Dialog on desktop.
+
+Table View: On desktop, replace the simple transaction list with a proper <table> layout for better data density.
+
+Deliverable: The updated Layout wrapper component and the expanded Auth component.
+
+Quick Implementation Guide
+Since you are handling the logic later, keep these Tailwind classes in mind for your refactor:
+
+Sidebar/Bottom Nav Toggle: * Sidebar: className="hidden md:flex fixed left-0 h-full w-64"
+
+Bottom Nav: className="flex md:hidden fixed bottom-0 w-full"
+
+The Grid: Use grid grid-cols-1 md:grid-cols-12 gap-6 to allow your sidebar-content-sidebar (or main-content/sidebar) layout to breathe on a large screen.

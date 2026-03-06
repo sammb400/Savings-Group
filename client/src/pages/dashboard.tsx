@@ -25,30 +25,37 @@ export default function Dashboard() {
   return (
     <MobilePage showNav={true} title={group.name}>
       
-      {/* Scrollable Stats */}
-      <div className="-mt-2 mb-4">
-        <StatCards 
-          myTotal={myTotal} 
-          groupTotal={group.currentAmount} 
-          target={group.targetAmount} 
-        />
-      </div>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
+        {/* Left Column: Stats and Progress */}
+        <div className="md:col-span-7 space-y-6 md:space-y-8">
+          {/* Scrollable Stats */}
+          <div className="-mt-2">
+            <StatCards 
+              myTotal={myTotal} 
+              groupTotal={group.currentAmount} 
+              target={group.targetAmount} 
+            />
+          </div>
 
-      {/* Main Progress Indicator */}
-      <div className="glass rounded-[2rem] p-6 mb-8 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[40px] rounded-full pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 blur-[40px] rounded-full pointer-events-none" />
-        
-        <h2 className="text-center font-bold font-display text-lg mb-2 relative z-10">Monthly Goal</h2>
-        <ProgressCircle 
-          current={group.currentAmount} 
-          target={group.targetAmount} 
-          daysLeft={group.daysLeft} 
-        />
-      </div>
+          {/* Main Progress Indicator */}
+          <div className="glass rounded-[2rem] p-6 md:p-8 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[40px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 blur-[40px] rounded-full pointer-events-none" />
+            
+            <h2 className="text-center font-bold font-display text-lg md:text-xl mb-4 relative z-10">Monthly Goal</h2>
+            <ProgressCircle 
+              current={group.currentAmount} 
+              target={group.targetAmount} 
+              daysLeft={group.daysLeft} 
+            />
+          </div>
+        </div>
 
-      {/* Feed */}
-      <TransactionFeed transactions={recentTransactions} />
+        {/* Right Column: Transactions */}
+        <div className="md:col-span-5">
+          <TransactionFeed transactions={recentTransactions} />
+        </div>
+      </div>
 
       {/* Floating Action Button / Bottom Sheet Trigger */}
       <DepositDrawer groupId={group.id} />
