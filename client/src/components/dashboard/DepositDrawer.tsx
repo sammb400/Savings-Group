@@ -6,7 +6,7 @@ import { Button } from "../shared/Button";
 import { useAddTransaction } from "@/hooks/use-savings";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DepositDrawerProps {
   groupId: number;
@@ -18,7 +18,7 @@ export function DepositDrawer({ groupId }: DepositDrawerProps) {
   const [type, setType] = useState<"Daily" | "Weekly" | "Monthly">("Weekly");
   const [proof, setProof] = useState("");
   
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const { mutate: addTx, isPending } = useAddTransaction();
   const { toast } = useToast();
 

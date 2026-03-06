@@ -24,7 +24,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
           
           {prefix && (
-            <div className="absolute left-4 font-semibold text-foreground z-10 pointer-events-none">
+            <div className="absolute left-4 font-semibold text-foreground z-10 pointer-events-none select-none">
               {prefix}
             </div>
           )}
