@@ -40,7 +40,7 @@ export function StatCards({ myTotal, groupTotal, target }: StatCardsProps) {
             {card.title}
           </p>
           <div className="flex items-baseline gap-1">
-            <span className="text-lg font-bold opacity-80">$</span>
+            <span className="text-lg font-bold opacity-80">Kes</span>
             <span className="text-2xl font-extrabold font-display">
               {card.amount.toLocaleString()}
             </span>

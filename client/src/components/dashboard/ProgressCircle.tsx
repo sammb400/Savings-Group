@@ -61,7 +61,7 @@ export function ProgressCircle({ current, target, daysLeft }: ProgressCircleProp
           {daysLeft} Days Left
         </span>
         <div className="flex items-start">
-          <span className="text-2xl font-bold text-foreground mt-1">$</span>
+          <span className="text-2xl font-bold text-foreground mt-1">Kes</span>
           <span className="text-5xl font-extrabold font-display tracking-tight text-foreground">
             {current.toLocaleString()}
           </span>

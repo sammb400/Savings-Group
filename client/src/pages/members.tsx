@@ -106,7 +106,7 @@ export default function Members() {
             
             <div className="text-right">
               <p className="font-bold font-display text-lg text-foreground">
-                ${member.totalDeposited.toLocaleString()}
+                Kes{member.totalDeposited.toLocaleString()}
               </p>
               <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
                 Total

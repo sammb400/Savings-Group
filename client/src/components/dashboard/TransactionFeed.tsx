@@ -49,7 +49,7 @@ export function TransactionFeed({ transactions }: TransactionFeedProps) {
             
             <div className="text-right">
               <p className="font-bold font-display text-emerald-600 dark:text-emerald-400">
-                +${tx.amount}
+                +Kes{tx.amount}
               </p>
               <p className="text-[10px] text-muted-foreground mt-1 font-medium">
                 {new Date(tx.date || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
@@ -93,7 +93,7 @@ export function TransactionFeed({ transactions }: TransactionFeedProps) {
                 </td>
                 <td className="px-4 py-4 text-right">
                   <p className="font-bold font-display text-emerald-600 dark:text-emerald-400 text-sm">
-                    +${tx.amount}
+                    +Kes{tx.amount}
                   </p>
                   <p className="text-[10px] text-muted-foreground font-medium">
                     {new Date(tx.date || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}

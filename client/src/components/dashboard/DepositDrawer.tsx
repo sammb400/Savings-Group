@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DepositDrawerProps {
-  groupId: number;
+  groupId: string | number;
 }
 
 export function DepositDrawer({ groupId }: DepositDrawerProps) {
@@ -28,7 +28,7 @@ export function DepositDrawer({ groupId }: DepositDrawerProps) {
 
     addTx(
       { 
-        groupId, 
+        groupId: groupId, 
         amount: Number(amount), 
         depositType: type, 
         proofText: proof || "Manual Entry" 
@@ -40,7 +40,7 @@ export function DepositDrawer({ groupId }: DepositDrawerProps) {
           setProof("");
           toast({
             title: "Deposit Successful",
-            description: `$${amount} added to the group fund.`,
+            description: `Kes${amount} added to the group fund.`,
           });
         }
       }
@@ -54,7 +54,7 @@ export function DepositDrawer({ groupId }: DepositDrawerProps) {
         <label className="text-xs font-bold ml-1 text-muted-foreground uppercase tracking-widest">Amount</label>
         <Input 
           type="number"
-          prefix="$"
+          prefix="Kes"
           placeholder="0.00"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
