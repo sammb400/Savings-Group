@@ -1,27 +1,225 @@
 import React, { useState } from "react";
-import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Wallet, ArrowRight, UserPlus, Mail, Lock, Key } from "lucide-react";
+import { Wallet, ArrowRight, Mail, Lock, Key, Users, Target } from "lucide-react";
 import { Input } from "@/components/shared/Input";
 import { Button } from "@/components/shared/Button";
 import { SiGoogle } from "react-icons/si";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/AuthContext";
+import { useDatabase } from "@/lib/DatabaseContext";
+import { FirebaseError } from "firebase/app";
 
 export default function AuthPage() {
-  const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<"join" | "create">("join");
+  const { toast } = useToast();
+  const { login, signup, googleLogin, logout } = useAuth();
+  const { doesGroupExist, createGroupAndUser, joinGroupAndCreateUser, getUserDocument } = useDatabase();
+
+  const [activeTab, setActiveTab] = useState<"login" | "join" | "create">("login");
+
+  // Form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [inviteCode, setInviteCode] = useState("");
+  const [groupName, setGroupName] = useState("");
+  const [initialTarget, setInitialTarget] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleAuthError = (error: any, action: "Login" | "Signup") => {
+    let description = "An unknown error occurred. Please try again.";
+    if (error instanceof FirebaseError) {
+      switch (error.code) {
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+          description = "Invalid email or password. Please try again.";
+          break;
+        case 'auth/email-already-in-use':
+          description = `This email is already in use. Try logging in.`;
+          break;
+        case 'auth/weak-password':
+          description = "The password is too weak. Please use at least 6 characters.";
+          break;
+        default:
+          description = error.message;
+      }
+    }
+    toast({ title: `${action} Failed`, description, variant: "destructive" });
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      const userCredential = await googleLogin();
+      const user = userCredential.user;
+
+      // Check if user document already exists in Firestore. If so, they are a returning user.
+      const userDoc = await getUserDocument(user.uid);
+      if (userDoc) {
+        // Returning user, AuthProvider will handle the redirect.
+        setIsLoading(false);
+        return;
+      }
+
+      // New user for our app.
+      if (activeTab === 'login') {
+        // New user trying to log in via Google. This is an invalid action.
+        // They must either create or join a group. We sign them out of Firebase
+        // auth to prevent a weird state where they are auth'd but have no user doc.
+        await logout();
+        toast({
+          title: "New User",
+          description: "This Google account is not associated with any group. Please use the 'Join Group' or 'Create Group' tab.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // This is a new user for our app. Proceed with group creation or joining.
+      if (activeTab === 'create') {
+        if (!groupName || !inviteCode) {
+          toast({ title: "Missing Fields", description: "Group Name and Invitation Code are required to create a group.", variant: "destructive" });
+          setIsLoading(false);
+          return;
+        }
+        const groupExists = await doesGroupExist(inviteCode);
+        if (groupExists) {
+          toast({ title: "Invitation Code Taken", description: "This invitation code is already in use. Please choose another.", variant: "destructive" });
+          setIsLoading(false);
+          return;
+        }
+        await createGroupAndUser(user, groupName, inviteCode, Number(initialTarget));
+      } else { // Join group
+        if (!inviteCode) {
+          toast({ title: "Invitation Code Required", description: "Please enter an invitation code to join a group.", variant: "destructive" });
+          setIsLoading(false);
+          return;
+        }
+        const groupExists = await doesGroupExist(inviteCode);
+        if (!groupExists) {
+          toast({ title: "Invalid Code", description: "No group found with this invitation code.", variant: "destructive" });
+          setIsLoading(false);
+          return;
+        }
+        await joinGroupAndCreateUser(user, inviteCode);
+      }
+    } catch (error: any) {
+      if (error.code !== 'auth/popup-closed-by-user') {
+        handleAuthError(error, "Login");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      setLocation("/dashboard");
-    }, 800);
+
+    if (activeTab === 'login') {
+      try {
+        await login(email, password);
+        // AuthProvider handles redirect
+      } catch (error: any) {
+        handleAuthError(error, "Login");
+      }
+    } else if (activeTab === 'create') {
+      if (!groupName || !inviteCode) {
+        toast({ title: "Missing Fields", description: "Group Name and Invitation Code are required.", variant: "destructive" });
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const groupExists = await doesGroupExist(inviteCode);
+        if (groupExists) {
+          toast({ title: "Invitation Code Taken", description: "This invitation code is already in use. Please choose another.", variant: "destructive" });
+          return;
+        }
+        const userCredential = await signup(email, password);
+        await createGroupAndUser(userCredential.user, groupName, inviteCode, Number(initialTarget));
+      } catch (error: any) {
+        handleAuthError(error, "Signup");
+      }
+    } else { // 'join'
+      if (!inviteCode) {
+        toast({ title: "Invitation Code Required", description: "Please enter an invitation code to join.", variant: "destructive" });
+        setIsLoading(false);
+        return;
+      }
+      // Try to sign up first. If email is in use, then try to log in.
+      try {
+        const groupExists = await doesGroupExist(inviteCode);
+        if (!groupExists) {
+          toast({ title: "Invalid Code", description: "No group found with this invitation code.", variant: "destructive" });
+          return;
+        }
+        const userCredential = await signup(email, password);
+        await joinGroupAndCreateUser(userCredential.user, inviteCode);
+      } catch (error: any) {
+        if (error.code === 'auth/email-already-in-use') {
+          // Email already exists, tell them to go to the login tab.
+          toast({
+            title: "Account Exists",
+            description: "An account with this email already exists. Please go to the 'Log In' tab.",
+            variant: "destructive"
+          });
+        } else {
+          handleAuthError(error, "Signup");
+        }
+      }
+    }
+    setIsLoading(false);
   };
+
+  // Separate render functions for clarity
+  const CreateGroupFields = () => (
+    <>
+      <div className="space-y-1.5">
+        <label className="text-xs font-bold ml-1 text-muted-foreground uppercase tracking-wider">Group Name</label>
+        <Input
+          placeholder="e.g. Holiday Fund"
+          value={groupName}
+          onChange={(e) => setGroupName(e.target.value)}
+          icon={<Users className="w-5 h-5" />}
+          required
+        />
+      </div>
+      <div className="space-y-1.5">
+        <label className="text-xs font-bold ml-1 text-muted-foreground uppercase tracking-wider">Create Invitation Code</label>
+        <Input
+          placeholder="e.g. MWC2025"
+          value={inviteCode}
+          onChange={(e) => setInviteCode(e.target.value)}
+          icon={<Key className="w-5 h-5" />}
+          required
+        />
+      </div>
+      <div className="space-y-1.5">
+        <label className="text-xs font-bold ml-1 text-muted-foreground uppercase tracking-wider">Initial Target (Optional)</label>
+        <Input
+          type="number"
+          placeholder="e.g. 5000"
+          value={initialTarget}
+          onChange={(e) => setInitialTarget(e.target.value)}
+          icon={<Target className="w-5 h-5" />}
+        />
+      </div>
+    </>
+  );
+
+  const JoinGroupFields = () => (
+    <div className="space-y-1.5">
+      <label className="text-xs font-bold ml-1 text-muted-foreground uppercase tracking-wider">
+        Invitation Code
+      </label>
+      <Input
+        placeholder="Enter group code"
+        value={inviteCode}
+        onChange={(e) => setInviteCode(e.target.value)}
+        icon={<Key className="w-5 h-5" />}
+        required
+      />
+    </div>
+  );
 
   return (
     <div className="min-h-[100dvh] w-full relative flex items-center justify-center overflow-hidden bg-gradient-to-b from-emerald-50 to-background dark:from-emerald-950/20 dark:to-background p-4 md:p-8">
@@ -70,6 +268,16 @@ export default function AuthPage() {
           <div className="flex bg-secondary/50 p-1 rounded-2xl mb-6">
             <button 
               className={`flex-1 min-h-[44px] rounded-xl font-bold text-sm transition-all ${
+                activeTab === "login" 
+                  ? "bg-white dark:bg-zinc-800 text-foreground shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("login")}
+            >
+              Log In
+            </button>
+            <button 
+              className={`flex-1 min-h-[44px] rounded-xl font-bold text-sm transition-all ${
                 activeTab === "join" 
                   ? "bg-white dark:bg-zinc-800 text-foreground shadow-sm" 
                   : "text-muted-foreground hover:text-foreground"
@@ -114,22 +322,13 @@ export default function AuthPage() {
                   required
                 />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold ml-1 text-muted-foreground uppercase tracking-wider">
-                  {activeTab === "join" ? "Invitation Code" : "Initial Target"}
-                </label>
-                <Input 
-                  placeholder={activeTab === "join" ? "e.g. MIA2024" : "e.g. 5000"} 
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value)}
-                  icon={activeTab === "join" ? <Key className="w-5 h-5" /> : <Wallet className="w-5 h-5" />}
-                  required
-                />
-              </div>
+              
+              {activeTab === 'create' ? CreateGroupFields() : activeTab === 'join' ? JoinGroupFields() : null}
+
             </div>
 
             <Button type="submit" className="w-full min-h-[52px] mt-2" isLoading={isLoading}>
-              {activeTab === "join" ? "Join Savings Group" : "Create New Group"} <ArrowRight className="w-4 h-4 ml-1" />
+              {activeTab === 'login' ? 'Log In' : activeTab === 'join' ? 'Join Savings Group' : 'Create New Group'} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
             <div className="relative my-6">
@@ -143,7 +342,9 @@ export default function AuthPage() {
 
             <button 
               type="button"
-              className="w-full min-h-[52px] flex items-center justify-center gap-3 bg-white dark:bg-zinc-900 border border-border/80 rounded-2xl font-bold text-foreground hover:bg-secondary/30 transition-all active:scale-[0.98]"
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
+              className="w-full min-h-[52px] flex items-center justify-center gap-3 bg-white dark:bg-zinc-900 border border-border/80 rounded-2xl font-bold text-foreground hover:bg-secondary/30 transition-all active:scale-[0.98] disabled:opacity-50"
             >
               <SiGoogle className="w-5 h-5" />
               Sign in with Google
