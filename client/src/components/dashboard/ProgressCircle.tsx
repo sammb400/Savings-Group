@@ -8,7 +8,7 @@ interface ProgressCircleProps {
 }
 
 export function ProgressCircle({ current, target, daysLeft }: ProgressCircleProps) {
-  const percentage = Math.min(Math.round((current / target) * 100), 100);
+  const percentage = target > 0 ? Math.min(Math.round((current / target) * 100), 100) : 0;
   
   const radius = 110;
   const strokeWidth = 24;

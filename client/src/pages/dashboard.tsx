@@ -5,7 +5,31 @@ import { StatCards } from "@/components/dashboard/StatCards";
 import { TransactionFeed } from "@/components/dashboard/TransactionFeed";
 import { DepositDrawer } from "@/components/dashboard/DepositDrawer";
 import { useDashboard } from "@/hooks/use-savings";
-import { Loader2 } from "lucide-react";
+import { Loader2, Target, Plus } from "lucide-react";
+import { PlanSettingsDrawer } from "@/components/dashboard/PlanSettingsDrawer";
+import { Button } from "@/components/shared/Button";
+
+function CreatePlanCTA({ groupId, currentTitle }: { groupId: string, currentTitle?: string }) {
+  return (
+    <div className="glass rounded-[2rem] p-6 md:p-8 relative overflow-hidden text-center mb-8">
+      <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+        <Target className="w-8 h-8 text-primary" />
+      </div>
+      <div className="space-y-1">
+        <h2 className="text-2xl font-bold font-display">Create a Savings Plan</h2>
+        <p className="text-muted-foreground max-w-xs mx-auto">
+          Set a goal title, target amount, and timeline to start saving.
+        </p>
+      </div>
+      <PlanSettingsDrawer groupId={groupId} currentTitle={currentTitle}>
+        <Button className="mt-6 h-11 rounded-md px-8">
+          <Plus className="w-4 h-4 mr-2" />
+          Create Plan
+        </Button>
+      </PlanSettingsDrawer>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const { data, isLoading } = useDashboard();
@@ -24,6 +48,9 @@ export default function Dashboard() {
 
   return (
     <MobilePage showNav={true} title={group.name}>
+      
+      {/* This section allows creating a savings plan. */}
+      <CreatePlanCTA groupId={String(group.id)} currentTitle={group.name} />
       
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
         {/* Left Column: Stats and Progress */}
