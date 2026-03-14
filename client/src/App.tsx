@@ -11,6 +11,7 @@ import { Spinner } from "@/components/shared/Spinner";
 import AuthPage from "@/pages/auth";
 import DashboardPage from "@/pages/dashboard";
 import MembersPage from "@/pages/members";
+import ProfileDetailsPage from "@/pages/profile";
 import SettingsPage from "@/pages/settings";
 
 function Router() {
@@ -37,6 +38,9 @@ function Router() {
       </Route>
       <Route path="/settings">
         {currentUser ? <SettingsPage /> : <Redirect to="/" />}
+      </Route>
+      <Route path="/settings/profile">
+        {currentUser ? <ProfileDetailsPage /> : <Redirect to="/" />}
       </Route>
       {/* Fallback to 404 */}
       <Route component={NotFound} />

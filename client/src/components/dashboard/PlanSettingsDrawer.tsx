@@ -102,8 +102,7 @@ export function PlanSettingsDrawer({ children, groupId, currentTitle, currentTar
         <label className="text-xs font-bold ml-1 text-muted-foreground uppercase tracking-widest">Target Amount</label>
         <Input
           type="number"
-          prefix="Kes"
-          placeholder="0.00"
+          placeholder="Kes 0.00"
           value={targetAmount}
           onChange={(e) => setTargetAmount(e.target.value)}
           icon={<Target className="w-5 h-5" />}

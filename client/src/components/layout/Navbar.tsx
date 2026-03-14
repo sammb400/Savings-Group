@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Home, Users, Settings } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
+import { useDatabase } from "@/lib/DatabaseContext";
 import { clsx } from "clsx";
 
 const navItems = [
+
   { path: "/dashboard", icon: Home, label: "Home" },
   { path: "/members", icon: Users, label: "Members" },
   { path: "/settings", icon: Settings, label: "Settings" },
@@ -11,6 +14,22 @@ const navItems = [
 
 export function Navbar() {
   const [location] = useLocation();
+  const { currentUser } = useAuth();
+  const { getUserDocument } = useDatabase();
+  const [displayName, setDisplayName] = useState<string | null>(currentUser?.displayName || null);
+
+  useEffect(() => {
+    async function fetchUserData() {
+      if (currentUser?.uid) {
+        const data = await getUserDocument(currentUser.uid);
+        if (data?.displayName) {
+          setDisplayName(data.displayName);
+        }
+      }
+    }
+    fetchUserData();
+  }, [currentUser, getUserDocument]);
+
 
   return (
     <>
@@ -87,7 +106,9 @@ export function Navbar() {
 
         <div className="mt-auto p-4 bg-secondary/30 rounded-2xl border border-border/50">
           <p className="text-xs text-muted-foreground font-medium mb-1">Signed in as</p>
-          <p className="text-sm font-bold text-foreground truncate">Alice (Admin)</p>
+          <p className="text-sm font-bold text-foreground truncate">
+            {displayName ? displayName.split(" ")[0] : "User"}
+          </p>
         </div>
       </aside>
     </>

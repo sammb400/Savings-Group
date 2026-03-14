@@ -1,10 +1,27 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useLocation, useRouter } from "wouter";
 import { MobilePage } from "@/components/layout/MobilePage";
 import { Bell, Shield, LogOut, Moon, HelpCircle, ChevronRight, User } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
+import { useDatabase } from "@/lib/DatabaseContext";
 
 export default function Settings() {
+  const [, navigate] = useLocation();
   const { currentUser, logout } = useAuth();
+  const { getUserDocument } = useDatabase();
+  const [displayName, setDisplayName] = useState<string | null>(currentUser?.displayName || null);
+
+  useEffect(() => {
+    async function fetchUserData() {
+      if (currentUser?.uid) {
+        const data = await getUserDocument(currentUser.uid);
+        if (data?.displayName) {
+          setDisplayName(data.displayName);
+        }
+      }
+    }
+    fetchUserData();
+  }, [currentUser, getUserDocument]);
 
   const handleLogout = async () => {
     try {
@@ -18,7 +35,7 @@ export default function Settings() {
     {
       title: "Account",
       items: [
-        { icon: User, label: "Profile Details", action: () => {} },
+        { icon: User, label: "Profile Details", action: () => navigate('/settings/profile') },
         { icon: Shield, label: "Security & Privacy", action: () => {} },
       ]
     },
@@ -46,7 +63,7 @@ export default function Settings() {
           <span className="text-xl font-display font-bold text-primary-foreground">{currentUser?.email?.[0].toUpperCase()}</span>
         </div>
         <div>
-          <h2 className="text-xl font-bold font-display text-foreground">{currentUser?.displayName || "User"}</h2>
+          <h2 className="text-xl font-bold font-display text-foreground">{displayName || "User"}</h2>
           <p className="text-muted-foreground text-sm font-medium">{currentUser?.email}</p>
         </div>
       </div>
