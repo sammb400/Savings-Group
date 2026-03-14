@@ -124,28 +124,28 @@ export function useMembers() {
         // 1. Get current user's groupId
         const userDocRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userDocRef);
-        console.log("User snapshot:", userSnap.data()); // Your log from line 126
+        //console.log("User snapshot:", userSnap.data()); // Your log from line 126
         if (!userSnap.exists() || !userSnap.data().groupId) return [];
         const groupId = userSnap.data().groupId;
-        console.log("Attempting to fetch members for groupId:", groupId);
+        //console.log("Attempting to fetch members for groupId:", groupId);
 
         // 2. Get group document to find member IDs (bypassing list permissions on users)
         const groupDocRef = doc(db, "groups", groupId);
         const groupSnap = await getDoc(groupDocRef);
-        console.log("Group snapshot data:", groupSnap.data());
+        //console.log("Group snapshot data:", groupSnap.data());
         if (!groupSnap.exists()) return [];
         const memberIds = (groupSnap.data().members as string[]) || [];
-        console.log("Extracted member IDs:", memberIds);
+        //console.log("Extracted member IDs:", memberIds);
 
         // 3. Fetch user profiles individually
         const memberPromises = memberIds.map(uid => getDoc(doc(db, "users", uid)));
         const memberSnaps = await Promise.all(memberPromises);
-        console.log("Fetched individual member snapshots:", memberSnaps.map(s => s.data()));
+        //console.log("Fetched individual member snapshots:", memberSnaps.map(s => s.data()));
 
         // This part can be optimized later, but for now, it fetches transactions to calculate totals.
         const txQuery = query(collection(db, "transactions"), where("groupId", "==", groupId));
         const txSnap = await getDocs(txQuery);
-        console.log("Fetched transaction snapshots:", txSnap.docs.length, "transactions found.");
+        //console.log("Fetched transaction snapshots:", txSnap.docs.length, "transactions found.");
         const memberTotals: { [userId: string]: number } = {};
         txSnap.forEach(txDoc => {
           const tx = txDoc.data();
@@ -154,7 +154,7 @@ export function useMembers() {
             memberTotals[tx.userId] = (memberTotals[tx.userId] || 0) + amount;
           }
         });
-        console.log("Calculated member totals:", memberTotals);
+        //console.log("Calculated member totals:", memberTotals);
 
         // Map the user documents to the Member[] type
         const members: Member[] = [];
@@ -173,10 +173,10 @@ export function useMembers() {
         });
 
         const sortedMembers = members.sort((a, b) => b.totalDeposited - a.totalDeposited);
-        console.log("Processed members data:", sortedMembers);
+        //console.log("Processed members data:", sortedMembers);
         return sortedMembers;
       } catch (error) {
-        console.error("ERROR inside useMembers queryFn:", error);
+        //console.error("ERROR inside useMembers queryFn:", error);
         // Return an empty array to prevent the app from crashing while you debug.
         return [];
       }
