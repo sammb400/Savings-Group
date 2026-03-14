@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useRouter } from "wouter";
 import { MobilePage } from "@/components/layout/MobilePage";
-import { Bell, Shield, LogOut, Moon, HelpCircle, ChevronRight, User } from "lucide-react";
+import { Bell, Shield, LogOut, Moon, Sun, HelpCircle, ChevronRight, User } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { useDatabase } from "@/lib/DatabaseContext";
+import { useTheme } from "next-themes";
 
 export default function Settings() {
   const [, navigate] = useLocation();
   const { currentUser, logout } = useAuth();
   const { getUserDocument } = useDatabase();
   const [displayName, setDisplayName] = useState<string | null>(currentUser?.displayName || null);
+  const { setTheme, resolvedTheme } = useTheme();
 
   useEffect(() => {
     async function fetchUserData() {
@@ -43,7 +45,11 @@ export default function Settings() {
       title: "Preferences",
       items: [
         { icon: Bell, label: "Notifications", action: () => {} },
-        { icon: Moon, label: "Appearance", action: () => {} },
+        { 
+          icon: resolvedTheme === "dark" ? Sun : Moon, 
+          label: `Appearance (${resolvedTheme === "dark" ? "Dark" : "Light"})`, 
+          action: () => setTheme(resolvedTheme === "dark" ? "light" : "dark") 
+        },
       ]
     },
     {
